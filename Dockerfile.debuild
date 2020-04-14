@@ -1,0 +1,22 @@
+# Build environment
+FROM debian:sid
+
+# Install mk-build-deps and its dependencies
+RUN DEBIAN_FRONTEND=noninteractive apt-get update -yqq && \
+    apt-get install -y --no-install-recommends \
+    devscripts \
+    equivs
+
+# Copy files inside container is one option, but using a bind mount would be better
+ENV APPDIR /app
+RUN mkdir -p "$APPDIR"
+ADD ./ "$APPDIR"
+WORKDIR $APPDIR
+
+# Install build dependencies
+RUN DEBIAN_FRONTEND=noninteractive mk-build-deps -r -i debian/control \
+    -t 'apt-get -y -o Debug::pkgProblemResolver=yes --no-install-recommends'
+--> fails on check-all-the-things-build-deps : Depends: python-argcomplete but it is not installable
+
+# Build package
+RUN debuild --no-sign --build=any,all
